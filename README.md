@@ -24,8 +24,14 @@ flowchart TD
         B[Ingestion Service]
     end
 
-    subgraph Processing Pipeline
-        C[Kafka Broker]
+    subgraph Kafka Broker
+        direction LR
+        RAW[raw-game-events]
+        PROCESSED[processed-game-events]
+        DLQ[raw-game-events-dlq]
+    end
+
+    subgraph Processing & Storage
         D[Worker Service]
         E[PostgreSQL + TimescaleDB]
     end
@@ -36,13 +42,13 @@ flowchart TD
     end
 
     A -- WebSocket (Compressed MessagePack) --> B
-    B -- Produce --> C(raw-game-events)
-    C -- Consume --> D
+    B -- Produce --> RAW
+    RAW -- Consume --> D
     D -- Persist --> E
-    D -- Produce --> C(processed-game-events)
-    C -- Consume --> F
+    D -- Produce --> PROCESSED
+    PROCESSED -- Consume --> F
     F -- WebSocket --> G
-    D -- Produce on Error --> C(raw-game-events-dlq)
+    D -- Produce on Error --> DLQ
 ~~~
 
 ### Core Architectural Principles
